@@ -211,16 +211,103 @@ with about_tab:
         <div class="card">
           <div style="font-size: 1.25rem; font-weight: 700; margin: 0 0 .5rem;">About Moderately</div>
           <p>
-            <!-- Replace this with your own blurb -->
-            Moderately analyzes short passages (1–4 sentences) for political ideology bias and factuality,
-            then optionally rewrites the text to a neutral, factual form. Use this page to describe your
-            mission, data sources, limitations, and privacy approach.
+            <!-- About Moderately -->
+            Hi, my name is <b>Woojae Chung</b>, the creator of Moderately. Thank you for visiting! 
+            <br><br>
+            The motivation behind Moderately is clear. Today's world suffers from polarization and misinformation. 
+            Internet and social media algorithms are designed to put you in an echo chamber where you are constantly exposed to similarly biased content and slowly polarizing your views. 
+            And no, credible news organizations aren't free from blame either. This issue is most prominent in the context of politics.
+            <br><br>
+            Moderately aims to help users identify political bias and factuality in text. 
+            As the user, you can paste a body of text, and Moderately will analyze it for political bias and factuality. 
+            It will then rewrite the text to a neutral, factual form.
+            <br><br>
+            This is currently a working prototype and a passion project of mine. My goal is to expand its capabilities and make the model much more robust over time.
           </p>
-          <ul>
-            <li>What it does well</li>
-            <li>Where it may err (limitations)</li>
-            <li>How your data is used</li>
-          </ul>
+          <div style="font-size: 1.25rem; font-weight: 700; margin: 0 0 .5rem;">Data</div>
+          <p>
+            <!-- Data -->
+            The data I use come from two sources: <a href="https://huggingface.co/datasets/mediabiasgroup/BABE" target="_blank">BABE</a> dataset and the <a href="https://huggingface.co/datasets/cajcodes/political-bias" target="_blank">Political Bias</a> (short "PoliBias") dataset.
+            The two datasets combined provide around 5,000 short text samples. The BABE dataset contains binary labels for the existence of political leaning and an ordinal factuality scale. The PoliBias dataset contains a 5-scale ideological bias only.
+            <br><br>
+            For consistency, I implemented a new labeling scheme that labels the political ideology bias in a 5-scale ordinal format and the factuality in a 3-scale ordinal format for the combined dataset.
+            In this procedure, I use three "graders" to independently label each text sample, on top of the existing labels provided by the datasets for those that have them (BABE has factuality label, PoliBias has the ideology label).
+            The graders include two prompt-engineered GPT-4 models that are given altered instructions albeit with the same goal, the original label from the dataset, and myself, a human grader. 
+            In the case where all three graders agree, I accept the label. 
+            In the case where there is a disagreement but only by a small margin (e.g. 1 vs 2 vs 2), I accept the majority vote. 
+            In the case where all three graders disagree, my human grade overrides the others.
+            <br><br>
+            The final dataset is then split into train/val/test, and then the train/val dataset is fed into the model for the modeling stage.
+            <br><br>
+          </p>
+          <div style="font-size: 1.25rem; font-weight: 700; margin: 0 0 .5rem;">Model</div>
+          <p>
+            <!-- Model -->
+            The baseline model used is a distilBERT model. While other BERT-based models such as base BERT and RoBERTa were experimented with, I chose the distilBERT model due to its computational efficiency. 
+            <br><br>
+            A Multi-Head Classification model is built on top of the baseline model, which learns label-encoded ideology and factuality labels from the training data. This baseline model is then fine-tuned on the combined dataset.
+            Parameters such as learning rate, batch size, and number of epochs were tuned using the Optuna library, and the best-performing model was selected based on the validation set performance.
+            <br><br>
+            You can find the comparison between the baseline distilBERT model and the fine-tuned model below. Note that the results shown below are from the validation set, as I am still keen on improving the model before evaluating on the test set.
+          </p>
+          
+          <b>Ideology - Per Class and Overall F1 Scores</b>
+            <table>
+            <thead>
+                <tr><th>Class</th><th>Baseline</th><th>Fine-tuned</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>0</td><td>0.503</td><td>0.525</td></tr>
+                <tr><td>1</td><td>0.387</td><td>0.383</td></tr>
+                <tr><td>2</td><td>0.745</td><td>0.753</td></tr>
+                <tr><td>3</td><td>0.411</td><td>0.435</td></tr>
+                <tr><td>4</td><td>0.557</td><td>0.578</td></tr>
+                <tr><td><strong>Overall</strong></td><td><strong>0.520</strong></td><td><strong>0.533</strong></td></tr>
+            </tbody>
+            </table>
+
+          <b>Factuality - Per Class and Overall F1 Scores</b>
+            <table>
+            <thead>
+                <tr><th>Class</th><th>Baseline</th><th>Fine-tuned</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>0</td><td>0.823</td><td>0.826</td></tr>
+                <tr><td>1</td><td>0.663</td><td>0.639</td></tr>
+                <tr><td>2</td><td>0.784</td><td>0.777</td></tr>
+                <tr><td><strong>Overall</strong></td><td><strong>0.756</strong></td><td><strong>0.748</strong></td></tr>
+            </tbody>
+            </table>  
+
+          <div style="font-size: 1.25rem; font-weight: 700; margin: 0 0 .5rem;">Tech</div>
+          <p>
+            <!-- Tech -->
+            <ul>
+              <li>Frontend: Streamlit, Custom CSS</li>
+              <li>Classifier Model: PyTorch, HuggingFace Transformers (DistilBERT)</li>
+              <li>LLM (Rewrite): OpenAI Python SDK</li>
+              <li>CI/Testing: Pytest</li>
+              <li>Deployment: Streamlit Cloud</li>
+            </ul>
+          </p>
+
+          <div style="font-size: 1.25rem; font-weight: 700; margin: 0 0 .5rem;">Next Steps</div>
+          <p>
+            <!-- Next Steps -->
+            Importantly, Moderately is still a work in progress.
+            I am actively working on improving the model's performance, expanding the dataset, and enhancing the capabilities and user experience within Moderately.
+            <br><br>
+            On the roadmap, I am planning to:
+            <ul>
+              <li>Bring in additional data. This is, in my opinion, the biggest bottleneck. Moderately is only trained from short 1-2 sentence text and with only a few thousand examples. I have some datasets that are much more comprehensive that I would like to train on.</li>
+              <li>Improve model performance with a more robust model architecture. In particular, the model can use improvement on distinguishing the "Strongly" and "Somewhat" examples. Perhaps ordinal data + label encoding is not the most ideal choice. I would also like to compare with more language models.</li>
+              <li>Add in new features! I would like to add support for web scraping API to support calling from a live web page.</li>
+            </ul>
+          </p>
+
+          <p>
+            The GitHub repository for Moderately is available at <a href="https://github.com/wchung1209/moderately" target="_blank">github.com/wchung1209/moderately</a>.
+          </p>
         </div>
         """,
         unsafe_allow_html=True,
