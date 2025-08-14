@@ -8,6 +8,7 @@ import importlib.util
 from transformers import DistilBertTokenizerFast, DistilBertConfig
 import sys
 import numpy as np
+from functools import lru_cache
 from openai import OpenAI
 try:
     from dotenv import load_dotenv
@@ -20,15 +21,6 @@ if hasattr(np.core, '_multiarray_umath'):
     sys.modules['numpy._core._multiarray_umath'] = np.core._multiarray_umath
 
 # ─── CONFIGURE THESE PATHS ────────────────────────────────────────────────
-# #ARTIFACT_DIR      = "/content/drive/MyDrive/DS Project - Moderately/moderately_artifacts"
-# ARTIFACT_DIR      = "/moderately_artifacts"
-# MODEL_DIR         = os.path.join(ARTIFACT_DIR, "model")
-# TOKENIZER_DIR     = os.path.join(ARTIFACT_DIR, "tokenizer")
-# IDEO_ENCODER_PATH = os.path.join(ARTIFACT_DIR, "ideo_encoder.pkl")
-# FACT_ENCODER_PATH = os.path.join(ARTIFACT_DIR, "fact_encoder.pkl")
-# #TRAIN_SCRIPT_PATH = "/content/drive/MyDrive/DS Project - Moderately/code/2_Model_Training.py"
-# TRAIN_SCRIPT_PATH = "/code/2_Model_Training.py"
-
 BASE_DIR      = os.path.dirname(os.path.dirname(__file__))   # project_root/
 ARTIFACT_DIR  = os.path.join(BASE_DIR, "moderately_artifacts")
 MODEL_DIR         = os.path.join(ARTIFACT_DIR, "model")
@@ -156,10 +148,28 @@ if __name__ == "__main__":
 
 # ─── 7) Rewrite Function ───────────────────────────────────────────────────────────
 
-OPENAI_KEY = os.getenv("OPENAI_API_KEY")
-if not OPENAI_KEY:
-    raise RuntimeError("OPENAI_API_KEY not set. See README for setup.")
-client = OpenAI(api_key=OPENAI_KEY)
+# OPENAI_KEY = os.getenv("OPENAI_API_KEY")
+# if not OPENAI_KEY:
+#     raise RuntimeError("OPENAI_API_KEY not set. See README for setup.")
+# client = OpenAI(api_key=OPENAI_KEY)
+
+@lru_cache(maxsize=1)
+def get_openai_client() -> OpenAI:
+    # Try Streamlit Secrets first, then env var
+    key = None
+    if st and hasattr(st, "secrets"):
+        # supports either flat or namespaced secrets
+        key = st.secrets.get("OPENAI_API_KEY") or \
+              (st.secrets.get("openai", {}).get("api_key") if isinstance(st.secrets.get("openai"), dict) else None)
+    key = key or os.getenv("OPENAI_API_KEY")
+
+    if not key:
+        # Raise a clear error only when you actually try to use the client
+        raise RuntimeError(
+            "OPENAI_API_KEY is not set. Add it in Streamlit Cloud → Manage app → Settings → Secrets.\n"
+            "Supported keys: OPENAI_API_KEY or [openai].api_key"
+        )
+    return OpenAI(api_key=key)
 
 SYSTEM_PROMPT = """
 You are an assistant that rewrites user‐supplied text to remove political bias and opinionated language while preserving only the factual claims. Do NOT add new facts or change meaning. Keep length, tone, and style as close as possible to the original.
@@ -175,18 +185,32 @@ Detected factuality label: {factuality}
 Please output only the rewritten, neutral, factual text.
 """
 
-def rewrite(text, ideology, factuality):
-    messages = [
-        {"role": "system", "content": SYSTEM_PROMPT},
-        {"role":   "user", "content": USER_TEMPLATE.format(
-            text=text,
-            ideology=ideology,
-            factuality=factuality
-        )}
-    ]
+# def rewrite(text, ideology, factuality):
+#     messages = [
+#         {"role": "system", "content": SYSTEM_PROMPT},
+#         {"role":   "user", "content": USER_TEMPLATE.format(
+#             text=text,
+#             ideology=ideology,
+#             factuality=factuality
+#         )}
+#     ]
+#     resp = client.chat.completions.create(
+#         model="gpt-4o-mini",
+#         messages=messages,
+#         temperature=0.0,
+#     )
+#     return resp.choices[0].message.content.strip()
+
+def rewrite(text: str, ideology: str, factuality: str) -> str:
+    client = get_openai_client()
     resp = client.chat.completions.create(
-        model="gpt-4o-mini",
-        messages=messages,
+        model="gpt-4o-mini", 
+        messages=[
+            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "user", "content": USER_TEMPLATE.format(
+                text=text, ideology=ideology, factuality=factuality
+            )},
+        ],
         temperature=0.0,
     )
     return resp.choices[0].message.content.strip()
