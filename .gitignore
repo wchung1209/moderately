@@ -3,3 +3,4 @@ moderately_artifacts/model/model_state_dict.pt
 .streamlit/secrets.toml
 data/babe_polibias_prompt_labeling.ipynb
 __pycache__/
+moderately-bias-model/

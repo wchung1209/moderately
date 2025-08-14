@@ -15,6 +15,10 @@ try:
     load_dotenv()
 except Exception:
     pass
+try:
+    from huggingface_hub import hf_hub_download
+except Exception:
+    hf_hub_download = None 
 
 sys.modules['numpy._core'] = np.core
 if hasattr(np.core, '_multiarray_umath'):
@@ -152,6 +156,38 @@ if __name__ == "__main__":
 # if not OPENAI_KEY:
 #     raise RuntimeError("OPENAI_API_KEY not set. See README for setup.")
 # client = OpenAI(api_key=OPENAI_KEY)
+
+MODEL_REPO = os.getenv("HF_REPO", "wchung1209/moderately-bias-model")
+MODEL_FILE = os.getenv("MODEL_FILENAME", "model_state_dict.pt")
+
+def _resolve_weights_path() -> str:
+    # 1) If present next to the code (dev/local), use it
+    here = os.path.dirname(__file__)
+    local_candidate = os.path.join(here, MODEL_FILE)
+    if os.path.exists(local_candidate):
+        return local_candidate
+
+    # 2) Otherwise fetch from HF Hub into a writable cache dir
+    if hf_hub_download is None:
+        raise RuntimeError("huggingface_hub not installed; cannot fetch model weights.")
+
+    path = hf_hub_download(
+        repo_id=MODEL_REPO,
+        filename=MODEL_FILE,
+        token=os.getenv("HF_TOKEN"), 
+        local_dir=os.path.expanduser("~/.cache/moderately"),
+        local_dir_use_symlinks=False,
+    )
+    return path
+
+@lru_cache(maxsize=1)
+def load_model(device: torch.device):
+    weights_path = _resolve_weights_path()
+    state = torch.load(weights_path, map_location=device)
+    model = build_model()  # your constructor that defines the same architecture
+    model.load_state_dict(state, strict=True)
+    model.to(device).eval()
+    return model
 
 @lru_cache(maxsize=1)
 def get_openai_client() -> OpenAI:
