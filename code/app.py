@@ -1,7 +1,9 @@
 # code/app.py
+from pathlib import Path
 import sys
 import os
 import streamlit as st
+import base64
 
 # Path to inference.py
 sys.path.append(os.path.dirname(__file__))
@@ -13,6 +15,8 @@ from inference import predict, rewrite
 # Paths & Config
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))  # project_root/
 LOGO_PATH = os.path.join(BASE_DIR, "misc", "logo.png")
+DIAGRAM_PATH = os.path.join(BASE_DIR, "misc", "moderately_diagram.png")
+
 
 st.set_page_config(page_title="Moderately – Political Bias & Factuality Checker", layout="wide")
 
@@ -153,6 +157,11 @@ def require_openai_key_ui() -> str:
         st.stop()
     return key
 
+def _img_to_base64(path: str) -> str:
+    p = Path(path)
+    return base64.b64encode(p.read_bytes()).decode("utf-8") if p.exists() else ""
+diagram_b64 = _img_to_base64(DIAGRAM_PATH)
+
 # Ensure our session_state keys exist
 if "result" not in st.session_state:
     st.session_state.result = None
@@ -207,7 +216,7 @@ with home_tab:
 with about_tab:
     render_header("About Moderately", "")
     st.markdown(
-        """
+        f"""
         <div class="card">
           <div style="font-size: 1.25rem; font-weight: 700; margin: 0 0 .5rem;">About Moderately</div>
           <p>
@@ -241,6 +250,14 @@ with about_tab:
             <br><br>
           </p>
           <div style="font-size: 1.25rem; font-weight: 700; margin: 0 0 .5rem;">Model</div>
+          <!-- Model diagram image -->
+          <div style="margin: 8px 0 18px;">
+            <img 
+              src="data:image/png;base64,{diagram_b64}" 
+              alt="Moderately model flow diagram"
+              style="width:100%; max-width: 980px; display:block; margin: 0 auto; border: 1px solid var(--card-border); border-radius: 12px;"
+            />
+          </div>
           <p>
             <!-- Model -->
             The baseline model used is a distilBERT model. While other BERT-based models such as base BERT and RoBERTa were experimented with, I chose the distilBERT model due to its computational efficiency. 
