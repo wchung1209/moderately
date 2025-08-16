@@ -2,7 +2,7 @@
 
 ## Motivation
 
-Sources suggest that we spend an average of [7 hours per day]("https://www.statista.com/statistics/1380282/daily-time-spent-online-global/") on the Internet and upwards of [3 hours](https://explodingtopics.com/blog/social-media-usage) of that on social media. These numbers significantly increases with the younger generation. Unfortunately, these are hours spent on consuming content that is driven by highly manipulative and addicting algorithms.
+Sources suggest that we spend an average of [7 hours per day](https://www.statista.com/statistics/1380282/daily-time-spent-online-global) on the Internet and upwards of [3 hours](https://explodingtopics.com/blog/social-media-usage) of that on social media. These numbers significantly increases with the younger generation. Unfortunately, these are hours spent on consuming content that is driven by highly manipulative and addicting algorithms.
 
 Because of that, today's world suffers from polarization and misinformation. Internet and social media algorithms are designed to be echo chambers where you are constantly exposed to similarly biased content that slowly polarize your views. News organizations, despite their credibility, are no exception. In fact, polarization is most prominent in politics, and where you get your news greatly influence your political views.
 
@@ -14,7 +14,7 @@ Moderately is currently a working prototype. My goal is to expand its capabiliti
 
 ## Data 
 
-The data I use come from two sources:The [BABE]("https://huggingface.co/datasets/mediabiasgroup/BABE") dataset and the [Political Bias]("https://huggingface.co/datasets/cajcodes/political-bias") (short "PoliBias") dataset. The two datasets combined provide around 5,000 short text samples. The BABE dataset contains binary labels for the existence of political leaning and an ordinal factuality scale. The PoliBias dataset contains a 5-scale ideological bias only.
+The data I use come from two sources:The [BABE](https://huggingface.co/datasets/mediabiasgroup/BABE) dataset and the [Political Bias](https://huggingface.co/datasets/cajcodes/political-bias) (short "PoliBias") dataset. The two datasets combined provide around 5,000 short text samples. The BABE dataset contains binary labels for the existence of political leaning and an ordinal factuality scale. The PoliBias dataset contains a 5-scale ideological bias only.
 
 For consistency, I implemented a new labeling scheme that labels the political ideology bias in a 5-scale ordinal format and the factuality in a 3-scale ordinal format for the combined dataset.
 In this procedure, I use three "graders" to independently label each text sample, on top of the existing labels provided by the datasets for those that have them (BABE has factuality label, PoliBias has the ideology label).
