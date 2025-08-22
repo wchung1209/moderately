@@ -12,6 +12,8 @@ Moderately intends to address this problem by helping its users identify politic
 
 Moderately is currently a working prototype. My goal is to expand its capabilities and make the model much more robust over time.
 
+See video demo of Moderately [HERE!](https://youtu.be/wDiDHzbfyJA) 
+
 ## Data 
 
 The data I use come from two sources:The [BABE](https://huggingface.co/datasets/mediabiasgroup/BABE) dataset and the [Political Bias](https://huggingface.co/datasets/cajcodes/political-bias) (short "PoliBias") dataset. The two datasets combined provide around 5,000 short text samples. The BABE dataset contains binary labels for the existence of political leaning and an ordinal factuality scale. The PoliBias dataset contains a 5-scale ideological bias only.
